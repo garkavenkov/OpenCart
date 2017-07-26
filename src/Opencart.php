@@ -54,4 +54,28 @@ class Opencart
         }
         return self::$language_id;
     }
+
+    /**
+     * Returns Category id
+     * @param  string $category_name    Category name
+     * @return int                      Category id
+     */
+    public static function getCategoryId($category_name)
+    {
+        // Delete excess spaces in the category name
+        $category_name = preg_replace('/\s+/', ' ', $category_name);
+
+        $sql  = "SELECT `category_id` ";
+        $sql .= "FROM `" . self::$table_prefix . "category_description` ";
+        $sql .= "WHERE `name` = :category_name and ";
+        $sql .=     "`language_id` = " . self::getLanguageId();
+        $stmt = self::$dbh->prepare($sql);
+
+        if ($stmt->execute(array(":category_name" => $category_name))) {
+            $category_id = $stmt->fetch(\PDO::FETCH_ASSOC)['category_id'];
+            return $category_id;
+        } else {
+            return ;
+        }
+    }
 }
