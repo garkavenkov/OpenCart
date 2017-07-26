@@ -1,0 +1,18 @@
+{
+    "name": "garkavenkov/opencart",
+    "description": "Class for work with Opencart database",
+    "license": "MIT",
+    "keywords": ["Opencart"],
+    "authors": [
+        {
+            "name": "Maksim Garkavenkov",
+            "email": "maksim.garkavenkov@gmail.com"
+        }
+    ],
+    "require": {},
+    "autoload" :{
+        "psr-4" :{
+            "Garkavenkov\\Opencart\\" : "src"
+        }
+    }
+}
