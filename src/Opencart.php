@@ -71,26 +71,41 @@ class Opencart
 
     /**
      * Returns Category id
-     * @param  string $category_name    Category name
+     * @param  string $category_path    Category path
      * @return int                      Category id
      */
-    public static function getCategoryId($category_name)
+    public static function getCategoryId($category_path)
     {
         // Delete excess spaces in the category name
-        $category_name = preg_replace('/\s+/', ' ', $category_name);
+        $category_path = preg_replace('/\s+/', ' ', $category_path);
+        $categories = explode('/', $category_path);
+        $category_id = null;
+        $parent_category_id = 0;
 
-        $sql  = "SELECT `category_id` ";
-        $sql .= "FROM `" . self::$table_prefix . "category_description` ";
-        $sql .= "WHERE `name` = :category_name and ";
-        $sql .=     "`language_id` = " . self::getLanguageId();
+        $sql  = "SELECT cd.category_id, c.parent_id ";
+        $sql .= "FROM `" . self::$table_prefix . "category_description` cd ";
+        $sql .= "INNER JOIN `" . self::$table_prefix . "category` c ";
+        $sql .=     "USING (category_id) ";
+        $sql .= "WHERE cd.name = :category_name and ";
+        $sql .=     "cd.language_id = " . self::getLanguageId() . " and ";
+        $sql .=     "c.parent_id = :parent_category_id";
         $stmt = self::$dbh->prepare($sql);
-
-        if ($stmt->execute(array(":category_name" => $category_name))) {
-            $category_id = $stmt->fetch(\PDO::FETCH_ASSOC)['category_id'];
-            return $category_id;
-        } else {
-            return ;
+        $i=1;
+        foreach ($categories as $category) {
+            if ($stmt->execute(array(
+                ":category_name" => $category,
+                ":parent_category_id" => $parent_category_id
+            ))) {
+                $res = $stmt->fetch(\PDO::FETCH_ASSOC);
+                if (!$res) {
+                    return;
+                }
+                $category_id = $res['category_id'];
+                $parent_category_id =  $category_id;
+                $i++;
+            }
         }
+        return $category_id;
     }
 
     /**
