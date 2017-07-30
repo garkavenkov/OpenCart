@@ -126,6 +126,148 @@ class Opencart
     }
 
     /**
+     * Returns id for attribute group name
+     * @param  string $name Attribute group name
+     * @return int          Attribute group id
+     */
+    public static function getAttributeGroupId($name)
+    {
+        // Delete excess spaces in the group name
+        $name = preg_replace('/\s+/', ' ', $name);
+
+        $sql  = "SELECT `attribute_group_id` ";
+        $sql .= "FROM `" . self::$table_prefix . "attribute_group_description` ";
+        $sql .= "WHERE  `name` = '{$name}' and ";
+        $sql .=        "`language_id` = " . self::getLanguageId() ;
+        $attributeGroupId = self::$dbh->getFieldValue($sql, 'attribute_group_id');
+
+        return $attributeGroupId;
+    }
+
+    /**
+     * Imports Attribute group name
+     * @param  string   $name           Attribute group name
+     * @param  int      $sort_order     Attribute group sort order
+     * @return int                      Attribute group id
+     */
+    public function importAttributeGroup($name, $sort_order = null)
+    {
+        // Check whether group exists or not
+        $attribute_group_id = self::getAttributeGroupId($name);
+
+        if (!$attribute_group_id) {
+            // Find sor_order value for table 'attribute_group'
+            if (!$sort_order) {
+                $sort_order = self::getNextSortOrderValue("attribute_group");
+            }
+
+            $sql  = "INSERT INTO `" . self::$table_prefix . "attribute_group` (";
+            $sql .=     "`sort_order`";
+            $sql .= ") VALUES (";
+            $sql .=     ":sort_order";
+            $sql .= ")";
+            $stmt = self::$dbh->prepare($sql);
+            $stmt->execute(array(
+                ":sort_order" => $sort_order
+            ));
+
+            $attribute_group_id = self::$dbh->getLastInsertedId();
+
+            $sql  = "INSERT INTO `" . self::$table_prefix . "attribute_group_description` (";
+            $sql .=     "`attribute_group_id`, ";
+            $sql .=     "`language_id`, ";
+            $sql .=     "`name`";
+            $sql .= ") VALUES (";
+            $sql .=     ":attribute_group_id, ";
+            $sql .=     ":language_id, ";
+            $sql .=     ":name";
+            $sql .= ")";
+            $stmt = self::$dbh->prepare($sql);
+            $stmt->execute(array(
+                ":attribute_group_id" => $attribute_group_id,
+                ":language_id" => self::getLanguageId(),
+                ":name" => $name
+            ));
+        }
+        return $attribute_group_id;
+    }
+
+    /**
+     * Returns Attribute id
+     * @param  string $name Attribute name
+     * @return int          Attribute id
+     */
+    public static function getAttributeId($name)
+    {
+        // Delete excess spaces in the group name
+        $name = preg_replace('/\s+/', ' ', $name);
+
+        $sql  = "SELECT `attribute_id` ";
+        $sql .= "FROM `" . self::$table_prefix . "attribute_description` ";
+        $sql .= "WHERE `name` = '{$name}'";
+
+        $attributeId = self::$dbh->getFieldValue($sql, 'attribute_id');
+        return $attributeId;
+    }
+
+    /**
+     * Imports an Attribute
+     * @param  string $name  Attribute name
+     * @param  string $group Attribute group name
+     * @return int           Attribute id
+     */
+    public static function importAttribute($name, $group)
+    {
+        // Find Attribute Group Id by $group
+        $attribute_group_id = self::getAttributeGroupId($group);
+
+        // If Attribute group not found, create one
+        if (!$attribute_group_id) {
+            $attribute_group_id = self::importAttributeGroup($group);
+        }
+
+        // Sort order for new attribute
+        $sort_order = self::getNextSortOrderValue("attribute");
+
+        // Insert record into 'attribute' table
+        $sql  = "INSERT INTO `" . self::$table_prefix . "attribute` (";
+        $sql .=     "`attribute_group_id`, ";
+        $sql .=     "`sort_order`";
+        $sql .= ") VALUES (";
+        $sql .=     ":attribute_group_id,";
+        $sql .=     ":sort_order";
+        $sql .= ")";
+        $stmt = self::$dbh->prepare($sql);
+        $stmt->execute(array(
+            ":attribute_group_id" => $attribute_group_id,
+            ":sort_order" => $sort_order
+        ));
+
+        // Attribute id
+        $attribute_id = self::$dbh->getLastInsertedId();
+
+        // Insert record into 'attribute_description' table
+        $sql  = "INSERT INTO `" . self::$table_prefix . "attribute_description` (";
+        $sql .=     "`attribute_id`, ";
+        $sql .=     "`language_id`, ";
+        $sql .=     "`name`";
+        $sql .= ") VALUES (";
+        $sql .=     ":attribute_id, ";
+        $sql .=     ":language_id, ";
+        $sql .=     ":name";
+        $sql .= ")";
+
+        $stmt = self::$dbh->prepare($sql);
+        $stmt->execute(array(
+            ":attribute_id" => $attribute_id,
+            ":language_id" => self::getLanguageId(),
+            ":name" => $name
+        ));
+
+        return $attribute_id;
+    }
+
+    /**
      * Import product
      * @param  array  $product Information about product/products
      * @return void
@@ -261,6 +403,18 @@ class Opencart
         $sql_images .=      ":sort_order";
         $sql_images .= ")";
 
+        $sql_attributes  = "INSERT INTO `" . self::$table_prefix . "product_attribute` (";
+        $sql_attributes .=      "`product_id`, ";
+        $sql_attributes .=      "`attribute_id`, ";
+        $sql_attributes .=      "`language_id`, ";
+        $sql_attributes .=      "`text`";
+        $sql_attributes .= ") VALUES (";
+        $sql_attributes .=      ":product_id, ";
+        $sql_attributes .=      ":attribute_id, ";
+        $sql_attributes .=      ":language_id, ";
+        $sql_attributes .=      ":text";
+        $sql_attributes .= ")";
+
         try {
             $stmt_product = self::$dbh->prepare($sql_product);
             $stmt_description = self::$dbh->prepare($sql_description);
@@ -268,6 +422,7 @@ class Opencart
             $stmt_layout = self::$dbh->prepare($sql_layout);
             $stmt_category = self::$dbh->prepare($sql_category);
             $stmt_images = self::$dbh->prepare($sql_images);
+            $stmt_attributes = self::$dbh->prepare($sql_attributes);
         } catch (\PDOException $e) {
             echo "Error: " . $e-getMessage();
         }
@@ -358,6 +513,25 @@ class Opencart
                         ":product_id" => $product_id,
                         ":image"      => $image['path'],
                         ":sort_order" => $image['sort_order']
+                    ));
+                }
+            }
+
+            // Insert attributes into 'product_attribute' table
+            if (isset($product['attributes'])) {
+                $group_name = "Технические характеристики";
+                foreach ($product['attributes'] as $attribute) {
+                    $name = array_keys($attribute)[0];
+                    $value = array_values($attribute)[0];
+                    $attribute_id = self::getAttributeId($name);
+                    if (!$attribute_id) {
+                        $attribute_id = self::importAttribute($name, $group_name);
+                    }
+                    $stmt_attributes->execute(array(
+                        ":product_id"   => $product_id,
+                        ":attribute_id" => $attribute_id,
+                        ":language_id"  => self::getLanguageId(),
+                        ":text"         => $value
                     ));
                 }
             }
