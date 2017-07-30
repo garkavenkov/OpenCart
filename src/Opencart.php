@@ -251,6 +251,15 @@ class Opencart
         $sql_category .=    ":main_category";
         $sql_category .= ")";
 
+        $sql_images  = "INSERT INTO `" . self::$table_prefix . "product_image` (";
+        $sql_images .=      "`product_id`, ";
+        $sql_images .=      "`image`, ";
+        $sql_images .=      "`sort_order` ";
+        $sql_images .= ") VALUES (";
+        $sql_images .=      ":product_id, ";
+        $sql_images .=      ":image, ";
+        $sql_images .=      ":sort_order";
+        $sql_images .= ")";
 
         try {
             $stmt_product = self::$dbh->prepare($sql_product);
@@ -258,6 +267,7 @@ class Opencart
             $stmt_store = self::$dbh->prepare($sql_store);
             $stmt_layout = self::$dbh->prepare($sql_layout);
             $stmt_category = self::$dbh->prepare($sql_category);
+            $stmt_images = self::$dbh->prepare($sql_images);
         } catch (\PDOException $e) {
             echo "Error: " . $e-getMessage();
         }
@@ -339,6 +349,18 @@ class Opencart
                 ":main_category" => $main_category
             ];
             $stmt_category->execute($params);
+
+            // Insert images into 'product_image' table
+            if (isset($product['images'])) {
+                foreach ($product['images'] as $image) {
+                    print_r($image);
+                    $stmt_images->execute(array(
+                        ":product_id" => $product_id,
+                        ":image"      => $image['path'],
+                        ":sort_order" => $image['sort_order']
+                    ));
+                }
+            }
         }
 
     }
