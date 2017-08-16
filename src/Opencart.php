@@ -558,7 +558,7 @@ class Opencart
         $sql .= "DELETE FROM `" . self::$table_prefix . "product_to_store`; ";
 
         try {
-            self::$dbh->query($sql)
+            self::$dbh->query($sql);
         } catch (\PDOException $e) {
             echo "Error: " . $e->getMessage();
         }
