@@ -10,7 +10,9 @@
         }
     ],
     "require": {
-        "garkavenkov/db-connector": "^1.0"
+        "garkavenkov/db-connector": "^1.0",
+        "garkavenkov/sql-generator": "^0.1.0",
+        "garkavenkov/colored-echo": ">=0.1"
     },
     "autoload" :{
         "psr-4" :{

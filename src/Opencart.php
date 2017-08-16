@@ -3,6 +3,8 @@
 namespace Garkavenkov\Opencart;
 
 use Garkavenkov\DBConnector\DBConnect;
+use Garkavenkov\SQLGenerator\SQL;
+use Garkavenkov\ColoredOutput\ColoredOutput;
 
 class Opencart
 {
@@ -272,148 +274,103 @@ class Opencart
      * @param  array  $product Information about product/products
      * @return void
      */
-    public static function importProducts(array $products)
+    public static function importProducts(array $products, $log=false)
     {
         // SQL statement for 'product' table
-        $sql_product  = "INSERT INTO `" . self::$table_prefix . "product` (";
-        $sql_product .=     "`model`, ";              // Модель
-        $sql_product .=     "`sku`, ";                // Артикул
-        $sql_product .=     "`upc`, ";                // Универсальный код товара
-        $sql_product .=     "`ean`, ";                // Европейский номер товара
-        $sql_product .=     "`jan`, ";                // Японский штрихкод
-        $sql_product .=     "`isbn`, ";               // Номер книжного издания
-        $sql_product .=     "`mpn`, ";                // Номер партии изготовителя
-        $sql_product .=     "`location`, ";           // Расположение
-        $sql_product .=     "`quantity`, ";           // Количество = 0
-        $sql_product .=     "`stock_status_id`, ";    // Отсутсвие на складе
-        $sql_product .=     "`image`, ";              // Изображение = NULL
-        $sql_product .=     "`manufacturer_id`, ";    // Id производителя
-        $sql_product .=     "`shipping`, ";           // Необходима доставка = 1
-        $sql_product .=     "`price`, ";              // Цена
-        $sql_product .=     "`points`, ";             // Баллы = 0
-        $sql_product .=     "`tax_class_id`, ";       // Налог
-        $sql_product .=     "`date_available`, ";     // Дата поступления
-        $sql_product .=     "`weight`, ";             // Вес = '0.00'
-        $sql_product .=     "`weight_class_id`, ";    // Единица веса = 0
-        $sql_product .=     "`length`, ";             // Длина = '0.00'
-        $sql_product .=     "`width`, ";              // Ширина = '0.00'
-        $sql_product .=     "`height`, ";             // Высота = '0.00'
-        $sql_product .=     "`length_class_id`, ";    // Единица длины = 0
-        $sql_product .=     "`subtract`, ";           // Вычитать со склада = 1
-        $sql_product .=     "`minimum`, ";            // Мин. кол-во товара для заказа =1
-        $sql_product .=     "`sort_order`, ";         // Порядок сортировки = 0
-        $sql_product .=     "`status`," ;             // Статус = 0
-        $sql_product .=     "`viewed`, ";             // Кол-во просмотров = 0
-        $sql_product .=     "`date_added`, ";         // Дата создания
-        $sql_product .=     "`date_modified`";        // Дата изменения
-        $sql_product .= ") VALUES ( ";
-        $sql_product .=     ":model, ";
-        $sql_product .=     ":sku, ";
-        $sql_product .=     ":upc, ";
-        $sql_product .=     ":ean, ";
-        $sql_product .=     ":jan, ";
-        $sql_product .=     ":isbn, ";
-        $sql_product .=     ":mpn, ";
-        $sql_product .=     ":location, ";
-        $sql_product .=     ":quantity, ";
-        $sql_product .=     ":stock_status_id, ";
-        $sql_product .=     ":image, ";
-        $sql_product .=     ":manufacturer_id, ";
-        $sql_product .=     ":shipping, ";
-        $sql_product .=     ":price, ";
-        $sql_product .=     ":points, ";
-        $sql_product .=     ":tax_class_id, ";
-        $sql_product .=     ":date_available, ";
-        $sql_product .=     ":weight, ";
-        $sql_product .=     ":weight_class_id, ";
-        $sql_product .=     ":length, ";
-        $sql_product .=     ":width, ";
-        $sql_product .=     ":height, ";
-        $sql_product .=     ":length_class_id, ";
-        $sql_product .=     ":subtract, ";
-        $sql_product .=     ":minimum, ";
-        $sql_product .=     ":sort_order, ";
-        $sql_product .=     ":status," ;
-        $sql_product .=     ":viewed, ";
-        $sql_product .=     ":date_added, ";
-        $sql_product .=     ":date_modified";
-        $sql_product .= ")";
+        $table_name = self::$table_prefix . "product";
+        $fields = [
+            "model",              // Модель
+            "sku",                // Артикул
+            "upc",                // Универсальный код товара
+            "ean",                // Европейский номер товара
+            "jan",                // Японский штрихкод
+            "isbn",               // Номер книжного издания
+            "mpn",                // Номер партии изготовителя
+            "location",           // Расположение
+            "quantity",           // Количество = 0
+            "stock_status_id",    // Отсутсвие на складе
+            "image",              // Изображение = NULL
+            "manufacturer_id",    // Id производителя
+            "shipping",           // Необходима доставка = 1
+            "price",              // Цена
+            "points",             // Баллы = 0
+            "tax_class_id",       // Налог
+            "date_available",     // Дата поступления
+            "weight",             // Вес = '0.00'
+            "weight_class_id",    // Единица веса = 0
+            "length",             // Длина = '0.00'
+            "width",              // Ширина = '0.00'
+            "height",             // Высота = '0.00'
+            "length_class_id",    // Единица длины = 0
+            "subtract",           // Вычитать со склада = 1
+            "minimum",            // Мин. кол-во товара для заказа =1
+            "sort_order",         // Порядок сортировки = 0
+            "status",             // Статус = 0
+            "viewed",             // Кол-во просмотров = 0
+            "date_added",         // Дата создания
+            "date_modified"       // Дата изменения
+        ];
+        $sql_product = SQL::insert($table_name, $fields);
 
         // SQL statement for 'product_description' table
-        $sql_description  = "INSERT INTO `" . self::$table_prefix . "product_description` (";
-        $sql_description .=     "`product_id`, ";
-        $sql_description .=     "`language_id`, ";
-        $sql_description .=     "`name`, ";
-        $sql_description .=     "`description`, ";
-        $sql_description .=     "`tag`, ";
-        $sql_description .=     "`meta_title`, ";
-        $sql_description .=     "`meta_h1`, ";
-        $sql_description .=     "`meta_description`, ";
-        $sql_description .=     "`meta_keyword` ";
-        $sql_description .= ") VALUES ( ";
-        $sql_description .=     ":product_id, ";
-        $sql_description .=     ":language_id, ";
-        $sql_description .=     ":name, ";
-        $sql_description .=     ":description, ";
-        $sql_description .=     ":tag, ";
-        $sql_description .=     ":meta_title, ";
-        $sql_description .=     ":meta_h1, ";
-        $sql_description .=     ":meta_description, ";
-        $sql_description .=     ":meta_keyword";
-        $sql_description .= ")";
+        $table_name = self::$table_prefix . "product_description";
+        $fields = [
+            "product_id",
+            "language_id",
+            "name",
+            "description",
+            "tag",
+            "meta_title",
+            "meta_h1",
+            "meta_description",
+            "meta_keyword"
+        ];
+        $sql_description = SQL::insert($table_name, $fields);
 
         // SQL statement for 'product_to_store' table
-        $sql_store  = "INSERT INTO `" . self::$table_prefix . "product_to_store` (";
-        $sql_store .=     "`product_id`, ";
-        $sql_store .=     "`store_id`";
-        $sql_store .= ") VALUES ( ";
-        $sql_store .=     ":product_id, ";
-        $sql_store .=     ":store_id";
-        $sql_store .= ")";
+        $table_name = self::$table_prefix . "product_to_store";
+        $fields = [
+            "product_id",
+            "store_id"
+        ];
+        $sql_store = SQL::insert($table_name, $fields);
 
         //  SQL statement for 'product_to_layout' table
-        $sql_layout  = "INSERT INTO `" . self::$table_prefix . "product_to_layout` (";
-        $sql_layout .=     "`product_id`, ";
-        $sql_layout .=     "`store_id`, ";
-        $sql_layout .=     "`layout_id` ";
-        $sql_layout .= ") VALUES ( ";
-        $sql_layout .=     ":product_id, ";
-        $sql_layout .=     ":store_id, ";
-        $sql_layout .=     ":layout_id";
-        $sql_layout .= ")";
+        $table_name = self::$table_prefix . "product_to_layout";
+        $fields = [
+            "product_id",
+            "store_id",
+            "layout_id"
+        ];
+        $sql_layout = SQL::insert($table_name, $fields);
 
         // SQL statement for 'product_to_category' table
-        $sql_category  = "INSERT INTO `" . self::$table_prefix . "product_to_category` (";
-        $sql_category .=    "`product_id`, ";
-        $sql_category .=    "`category_id`, ";
-        $sql_category .=    "`main_category`";
-        $sql_category .= ") VALUES (";
-        $sql_category .=    ":product_id, ";
-        $sql_category .=    ":category_id, ";
-        $sql_category .=    ":main_category";
-        $sql_category .= ")";
+        $table_name = self::$table_prefix . "product_to_category";
+        $fields = [
+            "product_id",
+            "category_id",
+            "main_category"
+        ];
+        $sql_category = SQL::insert($table_name, $fields);
 
-        $sql_images  = "INSERT INTO `" . self::$table_prefix . "product_image` (";
-        $sql_images .=      "`product_id`, ";
-        $sql_images .=      "`image`, ";
-        $sql_images .=      "`sort_order` ";
-        $sql_images .= ") VALUES (";
-        $sql_images .=      ":product_id, ";
-        $sql_images .=      ":image, ";
-        $sql_images .=      ":sort_order";
-        $sql_images .= ")";
+        // SQL statement for 'product_image' table
+        $table_name = self::$table_prefix . "product_image";
+        $fields = [
+            "product_id",
+            "image",
+            "sort_order"
+        ];
+        $sql_images = SQL::insert($table_name, $fields);
 
-        $sql_attributes  = "INSERT INTO `" . self::$table_prefix . "product_attribute` (";
-        $sql_attributes .=      "`product_id`, ";
-        $sql_attributes .=      "`attribute_id`, ";
-        $sql_attributes .=      "`language_id`, ";
-        $sql_attributes .=      "`text`";
-        $sql_attributes .= ") VALUES (";
-        $sql_attributes .=      ":product_id, ";
-        $sql_attributes .=      ":attribute_id, ";
-        $sql_attributes .=      ":language_id, ";
-        $sql_attributes .=      ":text";
-        $sql_attributes .= ")";
+        // SQL statement for 'product_attribute' table
+        $table_name = self::$table_prefix . "product_attribute";
+        $fields = [
+            "product_id",
+            "attribute_id",
+            "language_id",
+            "text"
+        ];
+        $sql_attributes = SQL::insert($table_name, $fields);
 
         try {
             $stmt_product = self::$dbh->prepare($sql_product);
@@ -427,7 +384,13 @@ class Opencart
             echo "Error: " . $e-getMessage();
         }
 
+        $products_count = count($products);
+        $i = 0;
         foreach ($products as $product) {
+            $i++;
+            if ($log) {
+                ColoredOutput::printProgressBar("Текущий прогресс: ", $products_count, $i, '▓');
+            }
             // Insert product  into 'product' table
             $params = [
                 ":model" => isset($product['model']) ? $product['model'] : "" ,
