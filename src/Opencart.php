@@ -536,6 +536,31 @@ class Opencart
                 }
             }
         }
+    }
 
+    public static function deleteAllProducts()
+    {
+        $sql  = "DELETE FROM `" . self::$table_prefix . "product`; ";
+        $sql .= "DELETE FROM `" . self::$table_prefix . "product_attribute`; ";
+        $sql .= "DELETE FROM `" . self::$table_prefix . "product_description`; ";
+        $sql .= "DELETE FROM `" . self::$table_prefix . "product_discount`; ";
+        $sql .= "DELETE FROM `" . self::$table_prefix . "product_filter`; ";
+        $sql .= "DELETE FROM `" . self::$table_prefix . "product_image`; ";
+        $sql .= "DELETE FROM `" . self::$table_prefix . "product_option_value`; ";
+        $sql .= "DELETE FROM `" . self::$table_prefix . "product_option`; ";
+        $sql .= "DELETE FROM `" . self::$table_prefix . "product_recurring`; ";
+        $sql .= "DELETE FROM `" . self::$table_prefix . "product_related`; ";
+        $sql .= "DELETE FROM `" . self::$table_prefix . "product_reward`; ";
+        $sql .= "DELETE FROM `" . self::$table_prefix . "product_special`; ";
+        $sql .= "DELETE FROM `" . self::$table_prefix . "product_to_category`; ";
+        $sql .= "DELETE FROM `" . self::$table_prefix . "product_to_download`; ";
+        $sql .= "DELETE FROM `" . self::$table_prefix . "product_to_layout`; ";
+        $sql .= "DELETE FROM `" . self::$table_prefix . "product_to_store`; ";
+
+        try {
+            self::$dbh->query($sql)
+        } catch (\PDOException $e) {
+            echo "Error: " . $e->getMessage();
+        }
     }
 }
