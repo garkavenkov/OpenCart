@@ -4,7 +4,6 @@ namespace Garkavenkov\Opencart;
 
 use Garkavenkov\DBConnector\DBConnect;
 use Garkavenkov\SQLGenerator\SQL;
-use Garkavenkov\ColoredOutput\ColoredOutput;
 
 class Opencart
 {
@@ -274,7 +273,7 @@ class Opencart
      * @param  array  $product Information about product/products
      * @return void
      */
-    public static function importProducts(array $products, $log=false)
+    public static function importProducts(array $products)
     {
         // SQL statement for 'product' table
         $table_name = self::$table_prefix . "product";
@@ -384,13 +383,7 @@ class Opencart
             echo "Error: " . $e-getMessage();
         }
 
-        $products_count = count($products);
-        $i = 0;
         foreach ($products as $product) {
-            $i++;
-            if ($log) {
-                ColoredOutput::printProgressBar("Текущий прогресс: ", $products_count, $i, '▓');
-            }
             // Insert product  into 'product' table
             $params = [
                 ":model" => isset($product['model']) ? $product['model'] : "" ,
