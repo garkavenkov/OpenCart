@@ -9,7 +9,9 @@
             "email": "maksim.garkavenkov@gmail.com"
         }
     ],
-    "require": {},
+    "require": {
+        "garkavenkov/db-connector": "^1.0"
+    },
     "autoload" :{
         "psr-4" :{
             "Garkavenkov\\Opencart\\" : "src"
